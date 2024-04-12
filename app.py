@@ -1,15 +1,47 @@
 import streamlit as st
 import pandas as pd
 import joblib
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler
 
-# Load your trained model and any necessary preprocessing steps
-model = joblib.load('models/svm_model.joblib')
+# Load all your trained models
+models = {
+    'Gaussian Naive Bayes': joblib.load('models/gnb_model.joblib'),
+    'K-Nearest Neighbors': joblib.load('models/knn_model.joblib'),
+    'Logistic Regression': joblib.load('models/log_model.joblib'),
+    'Support Vector Machine': joblib.load('models/svm_model.joblib')
+}
 
-
-# If you have any preprocessing steps (e.g., StandardScaler), load them here
-# scaler = joblib.load('path_to_your_preprocessing_steps.pkl')
+# Define the maximum and minimum values for each feature (scaled)
+feature_ranges = {
+    'Glucose': (0.0, 1.0),
+    'Cholesterol': (0.0, 1.0),
+    'Hemoglobin': (0.0, 1.0),
+    'Platelets': (0.0, 1.0),
+    'White Blood Cells': (0.0, 1.0),
+    'Red Blood Cells': (0.0, 1.0),
+    'Hematocrit': (0.0, 1.0),
+    'Mean Corpuscular Volume': (0.0, 1.0),
+    'Mean Corpuscular Hemoglobin': (0.0, 1.0),
+    'Mean Corpuscular Hemoglobin Concentration': (0.0, 1.0),
+    'Insulin': (0.0, 1.0),
+    'BMI': (0.0, 1.0),
+    'Systolic Blood Pressure': (0.0, 1.0),
+    'Diastolic Blood Pressure': (0.0, 1.0),
+    'Triglycerides': (0.0, 1.0),
+    'HbA1c': (0.0, 1.0),
+    'LDL Cholesterol': (0.0, 1.0),
+    'HDL Cholesterol': (0.0, 1.0),
+    'ALT': (0.0, 1.0),
+    'AST': (0.0, 1.0),
+    'Heart Rate': (0.0, 1.0),
+    'Creatinine': (0.0, 1.0),
+    'Troponin': (0.0, 1.0),
+    'C-reactive Protein': (0.0, 1.0)
+}
 
 # Streamlit App
 def main():
@@ -19,19 +51,10 @@ def main():
     # Define a function to collect user inputs
     def user_input_features():
         features = {}
-        # Define the input fields based on your model's requirements
-        input_fields = [
-            'Glucose', 'Cholesterol', 'Hemoglobin', 'Platelets',
-            'White Blood Cells', 'Red Blood Cells', 'Hematocrit',
-            'Mean Corpuscular Volume', 'Mean Corpuscular Hemoglobin',
-            'Mean Corpuscular Hemoglobin Concentration', 'Insulin',
-            'BMI', 'Systolic Blood Pressure', 'Diastolic Blood Pressure',
-            'Triglycerides', 'HbA1c', 'LDL Cholesterol', 'HDL Cholesterol',
-            'ALT', 'AST', 'Heart Rate', 'Creatinine', 'Troponin',
-            'C-reactive Protein'
-        ]
-        for field in input_fields:
-            features[field] = st.sidebar.slider(field, min_value=0.0, max_value=300.0, value=150.0)
+        for field in feature_ranges:
+            min_val, max_val = feature_ranges[field]
+            # Set the slider range based on the maximum and minimum values
+            features[field] = st.sidebar.slider(field, min_value=min_val, max_value=max_val, value=(min_val + max_val) / 2.0)
         return pd.DataFrame([features])
 
     # Get user inputs
@@ -41,20 +64,25 @@ def main():
     st.write('\n\nUser Input Features:')
     st.write(input_df)
 
-    # Make predictions
+    # Make predictions with each model when the user clicks the "Predict" button
     if st.sidebar.button('Predict'):
-        # Preprocess input data if necessary (e.g., scaling)
-        # input_df_scaled = scaler.transform(input_df)  # Apply preprocessing steps
+        st.subheader('Disease by: ')
 
-        # Use the model to make predictions
-        prediction = model.predict(input_df)
+        for model_name, model in models.items():
+            prediction = model.predict(input_df)
+            print(prediction)
+            prediction_proba = None
+            
+            # Check if the model has predict_proba method for probability estimation
+            if hasattr(model, 'predict_proba'):
+                prediction_proba = model.predict_proba(input_df)[0][1]
 
-        # Display prediction
-        st.subheader('Prediction')
-        if len(prediction) != 0:
-            st.write(f'The patient is suffering from: {prediction}.')
-        else:
-            st.write('The patient is predicted to be healthy.')
+            # Display prediction result and probability (if available)
+            # st.write(f"**{model_name}**: {prediction}", end="")
+            if len(prediction) != 0:
+                st.write(f"**{model_name}**: {prediction[0]}", end="")
+            else:
+                st.write('Healthy. :)')
 
 if __name__ == '__main__':
     main()
