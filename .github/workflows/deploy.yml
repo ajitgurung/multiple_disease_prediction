@@ -28,4 +28,4 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: juniorqdls/ml:latest
+          tags: juniorqdls/multiple-disease-app:latest
