@@ -1,11 +1,15 @@
 import streamlit as st
 import pandas as pd
 import joblib
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
 
 # Load your trained model and any necessary preprocessing steps
-model = joblib.load('path_to_your_model.pkl')
-# If you have any preprocessing steps (e.g., label encoding), load them here
-# encoder = joblib.load('path_to_your_preprocessing_steps.pkl')
+model = joblib.load('models/svm_model.joblib')
+
+
+# If you have any preprocessing steps (e.g., StandardScaler), load them here
+# scaler = joblib.load('path_to_your_preprocessing_steps.pkl')
 
 # Streamlit App
 def main():
@@ -39,19 +43,18 @@ def main():
 
     # Make predictions
     if st.sidebar.button('Predict'):
+        # Preprocess input data if necessary (e.g., scaling)
+        # input_df_scaled = scaler.transform(input_df)  # Apply preprocessing steps
+
+        # Use the model to make predictions
         prediction = model.predict(input_df)
-        prediction_proba = model.predict_proba(input_df)
 
         # Display prediction
         st.subheader('Prediction')
-        if prediction[0] == 1:
-            st.write('The patient is predicted to have the disease.')
+        if len(prediction) != 0:
+            st.write(f'The patient is suffering from: {prediction}.')
         else:
             st.write('The patient is predicted to be healthy.')
-
-        # Display prediction probabilities
-        st.subheader('Prediction Probability')
-        st.write(f'Probability of having the disease: {prediction_proba[0][1]:.2f}')
 
 if __name__ == '__main__':
     main()
